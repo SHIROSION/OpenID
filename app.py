@@ -1,7 +1,7 @@
 import logging
 import pymysql
 
-from flask import Flask, request
+from flask import Flask, request, json
 from control.Sever import CampSever
 from common.Riko import Riko
 
@@ -14,6 +14,17 @@ from common.Riko import Riko
 
 app = Flask(__name__)
 
+Riko.db_config = {
+    "host": "127.0.0.1",
+    "port": 3306,
+    "user": "root",
+    "passwd": "123456",
+    "db": "camptalk",
+    "charset": "utf8",
+    "autocommit": True,
+    "cursorclass": pymysql.cursors.DictCursor
+}
+
 
 @app.route("/")
 def index():
@@ -23,12 +34,14 @@ def index():
 @app.route("/api/sauth", methods=["POST"])
 def log_in():
     if request.method == "POST":
-        return CampSever.login_control(request.json)
+        return json.dumps(CampSever.login_control(request.json))
 
 
 @app.route("/api/user", methods=["POST"])
 def sign_in():
-    pass
+    if request.method == "POST":
+        print(request.json)
+        return json.dumps(CampSever.sign_in_control(request.json))
 
 
 @app.route("/api/user", methods=["PUT"])
@@ -47,18 +60,6 @@ def delete_user():
 
 
 if __name__ == "__main__":
-
-    Riko.db_config = {
-        "host": "127.0.0.1",
-        "port": 3306,
-        "user": "root",
-        "passwd": "123456",
-        "db": "camptalk",
-        "charset": "utf8",
-        "autocommit": True,
-        "cursorclass": pymysql.cursors.DictCursor
-    }
-
     log = logging.getLogger(__name__)
     formatter = logging.Formatter(
         '%(asctime)s %(name)s %(filename)s file line:%(lineno)d %(levelname)s: %(message)s')
@@ -69,5 +70,4 @@ if __name__ == "__main__":
     console_handler.setLevel(logging.DEBUG)
     console_handler.setFormatter(formatter)
     log.addHandler(console_handler)
-
     app.run(debug=True)

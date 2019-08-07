@@ -41,7 +41,10 @@ class DataBaseControl:
 
     @staticmethod
     def sign_in_information(**kwargs):
-        user_information.new(**kwargs).insert()
+        try:
+            user_information.new(**kwargs).insert()
+        except Exception as ex:
+            print(ex)
 
     @staticmethod
     def update_information(uid, info_dict):
@@ -62,5 +65,3 @@ if __name__ == "__main__":
         "autocommit": True,
         'cursorclass': pymysql.cursors.DictCursor
     }
-
-    print(DataBaseControl.get_user_information_by_email("111"))

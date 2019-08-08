@@ -30,14 +30,14 @@ class CampSever:
         try:
             get_info = None
 
-            if login_info["email"] is not None:
+            if login_info.__contains__("email"):
                 get_info = Connect.DataBaseControl.get_user_information_by_email(login_info["email"])
 
-            elif login_info["username"] is not None:
-                get_info = Connect.DataBaseControl.get_user_information_by_email(login_info["username"])
+            elif login_info.__contains__("username"):
+                get_info = Connect.DataBaseControl.get_user_information_by_username(login_info["username"])
 
-            elif login_info["phone"] is not None:
-                get_info = Connect.DataBaseControl.get_user_information_by_email(login_info["phone"])
+            elif login_info.__contains__("phone"):
+                get_info = Connect.DataBaseControl.get_user_information_by_phone(login_info["phone"])
 
             if get_info is not None:
 
@@ -51,7 +51,7 @@ class CampSever:
                     "remote_ip": login_info["remote_ip"]
                 }
 
-                if CampSever.sha256_key(login_info["username"], login_info["password"]) == get_info["pwd"]:
+                if CampSever.sha256_key(login_info["username"], login_info["pwd"]) == get_info["pwd"]:
                     login_success_info["login_success"] = 0
 
                     Connect.DataBaseControl.login_operating_information_update(**login_success_info)

@@ -40,13 +40,13 @@ def log_in():
 @app.route("/api/user", methods=["POST"])
 def sign_in():
     if request.method == "POST":
-        print(request.json)
         return json.dumps(CampSever.sign_in_control(request.json))
 
 
 @app.route("/api/user", methods=["PUT"])
 def update_user():
-    pass
+    if request.method == "PUT":
+        return json.dumps(CampSever.update_control(request.json))
 
 
 @app.route("/api/user", methods=["GET"])

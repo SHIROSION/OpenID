@@ -66,6 +66,11 @@ class CampSever:
                     Connect.DataBaseControl.login_operating_information_update(**login_success_info)
 
                     return login_return_info
+            else:
+                login_return_info["code"] = "200"
+                login_return_info["sub_code"] = 1
+
+                return login_return_info
 
         except Exception as ex:
             print(ex)
@@ -75,7 +80,7 @@ class CampSever:
 
     @staticmethod
     def sign_in_control(sign_in_info):
-        get_time = time.strftime("%Y-%m-%d %H:%M:%S")
+        get_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
 
         login_return_info = {
             "timestamp": get_time,
@@ -96,7 +101,6 @@ class CampSever:
             }
 
             try:
-                print(type(info))
                 Connect.DataBaseControl.sign_in_information(**info)
                 login_return_info["code"] = "200"
                 login_return_info["sub_code"] = 0
@@ -111,9 +115,38 @@ class CampSever:
             login_return_info["code"] = "500"
             login_return_info["sub_code"] = -1
             return login_return_info
+        
+    @staticmethod
+    def update_control(update_info):
+        get_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
 
-    def update_control(self):
-        pass
+        update_return_info = {
+            "timestamp": get_time,
+            "request_id": update_info["request_id"],
+            "code": "200",
+            "sub_code": 0
+        }
+
+        try:
+            need_update_info = {}
+            for x in update_info.keys():
+                if x in ["token", "timestamp", "request_id"]:
+                    continue
+                elif x == "pwd":
+                    need_update_info[x] = CampSever.sha256_key(update_info["username"], update_info["pwd"])
+                else:
+                    need_update_info[x] = update_info[x]
+
+            Connect.DataBaseControl.update_information_by_username(update_info["username"], need_update_info)
+            update_return_info["code"] = "200"
+            update_return_info["sub_code"] = 0
+            return update_return_info
+
+        except Exception as ex:
+            print(ex)
+            update_return_info["code"] = "500"
+            update_return_info["sub_code"] = -1
+            return update_return_info
 
     def get_user_list_control(self):
         pass

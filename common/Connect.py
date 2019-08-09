@@ -62,7 +62,7 @@ class DataBaseControl:
         new_info.update()
 
     @staticmethod
-    def update_information_by_username(phone, info_dict):
+    def update_information_by_username(username, info_dict):
         new_info = user_information.get_one(username=username)
         for k, v in info_dict.items():
             new_info[k] = v

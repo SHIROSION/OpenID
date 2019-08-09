@@ -51,12 +51,14 @@ def update_user():
 
 @app.route("/api/user", methods=["GET"])
 def get_user_list():
-    pass
+    if request.method == "GET":
+        return json.dumps(CampSever.get_user_list_control(request.json))
 
 
-@app.route("/api/user", methods=["PUT"])
+@app.route("/api/user", methods=["DELETE"])
 def delete_user():
-    pass
+    if request.method == "DELETE":
+        return json.dumps(CampSever.delete_user_control(request.json))
 
 
 if __name__ == "__main__":

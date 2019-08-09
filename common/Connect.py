@@ -12,7 +12,7 @@ from common.Riko import Riko, DictModel, ObjectModel, INSERT
 class user_information(DictModel):
     pk = ["uid"]
     fields = ["phone", "email", "username", "pwd", "appid", "clientId", "timestamp", "login_channel", "extra_payload",
-              "user_payload"]
+              "user_payload", "state"]
 
 
 class login_information(DictModel):
@@ -34,6 +34,10 @@ class DataBaseControl:
     @staticmethod
     def get_user_information_by_username(username):
         return user_information.get_one(username=username)
+
+    @staticmethod
+    def get_user_many(user_list):
+        return user_information.select().where_in("username", user_list).get()
 
     @staticmethod
     def login_operating_information_update(**kwargs):
@@ -58,11 +62,8 @@ class DataBaseControl:
         new_info.update()
 
     @staticmethod
-    def update_information_by_username(username, info_dict):
-        new_info = user_information.get_one(username=username)
-        for k, v in info_dict.items():
-            new_info[k] = v
-        new_info.update()
+    def delete_information(info_dict):
+        user_information.update_query().set(state=-1).where_in("username", info_dict).go()
 
 
 if __name__ == "__main__":
@@ -76,3 +77,5 @@ if __name__ == "__main__":
         "autocommit": True,
         'cursorclass': pymysql.cursors.DictCursor
     }
+
+    print(DataBaseControl.delete_information(["zzx", "zzcx"]))

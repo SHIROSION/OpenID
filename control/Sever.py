@@ -39,7 +39,7 @@ class CampSever:
             elif login_info.__contains__("phone"):
                 get_info = Connect.DataBaseControl.get_user_information_by_phone(login_info["phone"])
 
-            if get_info is not None:
+            if get_info is not None and get_info["state"] == 0:
 
                 login_success_info = {
                     "uid": get_info["uid"], "username": get_info["username"],
@@ -97,7 +97,7 @@ class CampSever:
                 "appid": sign_in_info["appid"],
                 "clientId": sign_in_info["clientId"],
                 "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "login_channel": sign_in_info["login_channel"]
+                "login_channel": sign_in_info["login_channel"],
             }
 
             try:
@@ -148,11 +148,50 @@ class CampSever:
             update_return_info["sub_code"] = -1
             return update_return_info
 
-    def get_user_list_control(self):
-        pass
+    @staticmethod
+    def get_user_list_control(list_info):
+        get_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
 
-    def delete_user_control(self):
-        pass
+        user_list_return_info = {
+            "timestamp": get_time,
+            "request_id": list_info["request_id"],
+            "code": "200",
+            "sub_code": 0,
+            "data": None
+        }
+
+        try:
+            user_list_return_info["data"] = Connect.DataBaseControl.get_user_many(list_info["data"])
+            user_list_return_info["code"] = "200"
+            user_list_return_info["sub_code"] = 0
+            return user_list_return_info
+        except Exception as ex:
+            print(ex)
+            user_list_return_info["code"] = "500"
+            user_list_return_info["sub_code"] = -1
+            return user_list_return_info
+
+    @staticmethod
+    def delete_user_control(delete_info):
+        get_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
+
+        delete_return_info = {
+            "timestamp": get_time,
+            "request_id": delete_info["request_id"],
+            "code": "200",
+            "sub_code": 0
+        }
+
+        try:
+            Connect.DataBaseControl.delete_information(delete_info["data"])
+            delete_return_info["code"] = "200"
+            delete_return_info["sub_code"] = 0
+            return delete_return_info
+
+        except Exception as ex:
+            print(ex)
+            delete_return_info["code"] = "500"
+            delete_return_info["sub_code"] = -1
 
     @staticmethod
     def sha256_key(username, pwd):

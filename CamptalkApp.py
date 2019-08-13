@@ -6,7 +6,7 @@ from control.Server import CampServer
 from common.Riko import Riko
 
 """
-@module  : app.py
+@module  : CamptalkApp.py
 @author  : Rinne
 @contact : yejunbin123@qq.com
 @time    : 2019/08/03
@@ -66,4 +66,4 @@ if __name__ == "__main__":
     console_handler.setLevel(logging.DEBUG)
     console_handler.setFormatter(formatter)
     log.addHandler(console_handler)
-    app.run(debug=True)
+    app.run(debug=True, port=20721)

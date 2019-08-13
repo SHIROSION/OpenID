@@ -71,18 +71,3 @@ class DataBaseControl:
     @staticmethod
     def delete_information(info_dict):
         user_information.update_query().set(state=-1).where_in("username", info_dict).go()
-
-
-if __name__ == "__main__":
-    Riko.db_config = {
-        "host": "127.0.0.1",
-        "port": 3306,
-        "user": "root",
-        "passwd": "123456",
-        "db": "camptalk",
-        "charset": "utf8",
-        "autocommit": True,
-        'cursorclass': pymysql.cursors.DictCursor
-    }
-
-    print(DataBaseControl.delete_information(["zzx", "zzcx"]))

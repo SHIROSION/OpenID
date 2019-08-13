@@ -11,7 +11,7 @@ from common import Connect
 """
 
 
-class CampSever:
+class CampServer:
     def __init__(self):
         pass
 
@@ -30,13 +30,13 @@ class CampSever:
         try:
             get_info = None
 
-            if login_info.__contains__("email"):
+            if "email" in login_info:
                 get_info = Connect.DataBaseControl.get_user_information_by_email(login_info["email"])
 
-            elif login_info.__contains__("username"):
+            elif "username" in login_info:
                 get_info = Connect.DataBaseControl.get_user_information_by_username(login_info["username"])
 
-            elif login_info.__contains__("phone"):
+            elif "phone" in login_info:
                 get_info = Connect.DataBaseControl.get_user_information_by_phone(login_info["phone"])
 
             if get_info is not None and get_info["state"] == 0:
@@ -51,7 +51,7 @@ class CampSever:
                     "remote_ip": login_info["remote_ip"]
                 }
 
-                if CampSever.sha256_key(login_info["username"], login_info["pwd"]) == get_info["pwd"]:
+                if CampServer.sha256_key(login_info["username"], login_info["pwd"]) == get_info["pwd"]:
                     login_success_info["login_success"] = 0
 
                     Connect.DataBaseControl.login_operating_information_update(**login_success_info)
@@ -93,7 +93,7 @@ class CampSever:
                 "email": sign_in_info["email"],
                 "phone": sign_in_info["phone"],
                 "username": sign_in_info["username"],
-                "pwd": CampSever.sha256_key(sign_in_info["username"], sign_in_info["pwd"]),
+                "pwd": CampServer.sha256_key(sign_in_info["username"], sign_in_info["pwd"]),
                 "appid": sign_in_info["appid"],
                 "clientId": sign_in_info["clientId"],
                 "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -133,7 +133,7 @@ class CampSever:
                 if x in ["token", "timestamp", "request_id"]:
                     continue
                 elif x == "pwd":
-                    need_update_info[x] = CampSever.sha256_key(update_info["username"], update_info["pwd"])
+                    need_update_info[x] = CampServer.sha256_key(update_info["username"], update_info["pwd"])
                 else:
                     need_update_info[x] = update_info[x]
 

@@ -2,7 +2,7 @@ import logging
 import pymysql
 
 from flask import Flask, request, json
-from control.Sever import CampSever
+from control.Server import CampServer
 from common.Riko import Riko
 
 """
@@ -14,16 +14,10 @@ from common.Riko import Riko
 
 app = Flask(__name__)
 
-Riko.db_config = {
-    "host": "127.0.0.1",
-    "port": 3306,
-    "user": "root",
-    "passwd": "123456",
-    "db": "camptalk",
-    "charset": "utf8",
-    "autocommit": True,
-    "cursorclass": pymysql.cursors.DictCursor
-}
+with open("camptalk_db.json", "r") as file:
+    config = json.loads(file.read())
+config["cursorclass"] = pymysql.cursors.DictCursor
+Riko.db_config = config
 
 
 @app.route("/")
@@ -34,31 +28,31 @@ def index():
 @app.route("/api/sauth", methods=["POST"])
 def log_in():
     if request.method == "POST":
-        return json.dumps(CampSever.login_control(request.json))
+        return json.dumps(CampServer.login_control(request.json))
 
 
 @app.route("/api/user", methods=["POST"])
 def sign_in():
     if request.method == "POST":
-        return json.dumps(CampSever.sign_in_control(request.json))
+        return json.dumps(CampServer.sign_in_control(request.json))
 
 
 @app.route("/api/user", methods=["PUT"])
 def update_user():
     if request.method == "PUT":
-        return json.dumps(CampSever.update_control(request.json))
+        return json.dumps(CampServer.update_control(request.json))
 
 
 @app.route("/api/user", methods=["GET"])
 def get_user_list():
     if request.method == "GET":
-        return json.dumps(CampSever.get_user_list_control(request.json))
+        return json.dumps(CampServer.get_user_list_control(request.json))
 
 
 @app.route("/api/user", methods=["DELETE"])
 def delete_user():
     if request.method == "DELETE":
-        return json.dumps(CampSever.delete_user_control(request.json))
+        return json.dumps(CampServer.delete_user_control(request.json))
 
 
 if __name__ == "__main__":

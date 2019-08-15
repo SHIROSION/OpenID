@@ -1,4 +1,6 @@
 import logging
+from datetime import datetime
+
 import pymysql
 
 from flask import Flask, request, json
@@ -22,37 +24,39 @@ Riko.db_config = config
 
 @app.route("/")
 def index():
-    return "test"
+    a = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f%Z")
+    print(a)
+    return ""
 
 
 @app.route("/api/sauth", methods=["POST"])
 def log_in():
     if request.method == "POST":
-        return json.dumps(CampServer.login_control(request.json))
+        return json.jsonify(CampServer.login_control(request.json))
 
 
 @app.route("/api/user", methods=["POST"])
 def sign_in():
     if request.method == "POST":
-        return json.dumps(CampServer.sign_in_control(request.json))
+        return json.jsonify(CampServer.sign_in_control(request.json))
 
 
 @app.route("/api/user", methods=["PUT"])
 def update_user():
     if request.method == "PUT":
-        return json.dumps(CampServer.update_control(request.json))
+        return json.jsonify(CampServer.update_control(request.json))
 
 
 @app.route("/api/user", methods=["GET"])
 def get_user_list():
     if request.method == "GET":
-        return json.dumps(CampServer.get_user_list_control(request.json))
+        return json.jsonify(CampServer.get_user_list_control(request.values))
 
 
 @app.route("/api/user", methods=["DELETE"])
 def delete_user():
     if request.method == "DELETE":
-        return json.dumps(CampServer.delete_user_control(request.json))
+        return json.jsonify(CampServer.delete_user_control(request.json))
 
 
 if __name__ == "__main__":

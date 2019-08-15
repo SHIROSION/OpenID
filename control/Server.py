@@ -51,7 +51,7 @@ class CampServer:
                     "request_id": login_info["request_id"],
                     "appid": login_info["appid"],
                     "clientId": login_info["clientId"],
-                    "timestamp": CampServer.time_now_format(login_info["timestamp"], "%Y-%m-%d %H:%M:%S.%f%z"),
+                    "timestamp": login_info["timestamp"],
                     "login_channel": login_info["login_channel"],
                     "user_ip": login_info["user_ip"],
                     "remote_ip": login_info["remote_ip"]
@@ -204,8 +204,9 @@ class CampServer:
 
     @staticmethod
     def time_now_str():
-        now = datetime.now(tz=get_localzone())
-        return now.strftime("%Y-%m-%d %H:%M:%S.%f%z")
+        # now = datetime.now(tz=get_localzone())
+        # return now.strftime("%Y-%m-%d %H:%M:%S.%f%z")
+        return time.time()
 
     @staticmethod
     def time_now_format(date, date_format):

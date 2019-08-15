@@ -2,7 +2,6 @@ import hashlib
 import time
 
 from datetime import datetime
-from tzlocal import get_localzone
 from common import Connect
 
 """
@@ -204,8 +203,6 @@ class CampServer:
 
     @staticmethod
     def time_now_str():
-        # now = datetime.now(tz=get_localzone())
-        # return now.strftime("%Y-%m-%d %H:%M:%S.%f%z")
         return time.time()
 
     @staticmethod

@@ -22,6 +22,7 @@ class CampServer:
         login_return_info = {
             "timestamp": CampServer.time_now_str(),
             "request_id": login_info["request_id"],
+            "data": {},
             "code": 200,
             "sub_code": 0
         }
@@ -46,21 +47,25 @@ class CampServer:
                     "phone": get_info["phone"],
                     "email": get_info["email"],
                     "login_success": 0,
-                    "token": login_info["token"],
                     "request_id": login_info["request_id"],
                     "appid": login_info["appid"],
-                    "clientId": login_info["clientId"],
                     "timestamp": login_info["timestamp"],
                     "login_channel": login_info["login_channel"],
                     "user_ip": login_info["user_ip"],
                     "remote_ip": login_info["remote_ip"]
                 }
+                if "token" in login_info:
+                    login_success_info["token"] = login_info["token"]
+                if "clientId" in login_info:
+                    login_success_info["clientId"] = login_info["clientId"]
 
                 if CampServer.sha256_key(login_info["username"], login_info["pwd"]) == get_info["pwd"]:
                     login_success_info["login_success"] = 0
 
                     Connect.DataBaseControl.login_operating_information_update(**login_success_info)
 
+                    del get_info["pwd"]
+                    login_return_info["data"] = get_info
                     login_return_info["code"] = 200
                     login_return_info["sub_code"] = 0
                     return login_return_info
@@ -94,8 +99,6 @@ class CampServer:
         }
         try:
             info = {
-                "email": sign_in_info["email"],
-                "phone": sign_in_info["phone"],
                 "username": sign_in_info["username"],
                 "pwd": CampServer.sha256_key(sign_in_info["username"], sign_in_info["pwd"]),
                 "appid": sign_in_info["appid"],
@@ -103,6 +106,16 @@ class CampServer:
                 "timestamp": sign_in_info["timestamp"],
                 "login_channel": sign_in_info["login_channel"],
             }
+
+            check_account = False
+            if "email" in sign_in_info:
+                info["email"] = sign_in_info["email"]
+                check_account = True
+            if check_account is False:
+                raise Exception('lack email')
+
+            if "phone" in sign_in_info:
+                info["phone"] = sign_in_info["phone"]
 
             try:
                 Connect.DataBaseControl.sign_in_information(**info)
@@ -163,7 +176,22 @@ class CampServer:
         }
 
         try:
-            user_list_return_info["data"] = Connect.DataBaseControl.get_user_many(list_info["username"])
+            if "usernames" in list_info:
+                user_list_return_info["data"] = Connect.DataBaseControl.get_user_many(
+                    u_key='username',
+                    user_list=list_info["usernames"]
+                    )
+            elif "emails" in list_info:
+                user_list_return_info["data"] = Connect.DataBaseControl.get_user_many(
+                    u_key='email',
+                    user_list=list_info["emails"]
+                )
+            elif "phones" in list_info:
+                user_list_return_info["data"] = Connect.DataBaseControl.get_user_many(
+                    u_key='phone',
+                    user_list=list_info["phones"]
+                )
+
             user_list_return_info["code"] = 200
             user_list_return_info["sub_code"] = 0
             return user_list_return_info

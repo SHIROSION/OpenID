@@ -50,7 +50,7 @@ def update_user():
 @app.route("/api/user", methods=["GET"])
 def get_user_list():
     if request.method == "GET":
-        return json.jsonify(CampServer.get_user_list_control(request.values))
+        return json.jsonify(CampServer.get_user_list_control(request.json))
 
 
 @app.route("/api/user", methods=["DELETE"])

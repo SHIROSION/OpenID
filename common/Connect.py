@@ -36,8 +36,11 @@ class DataBaseControl:
         return user_information.get_one(username=username)
 
     @staticmethod
-    def get_user_many(user_list):
-        return user_information.select().where_in("username", user_list).get()
+    def get_user_many(u_key, user_list):
+        users = user_information.select().where_in(u_key, user_list).get()
+        for user in users:
+            del user["pwd"]
+        return users
 
     @staticmethod
     def login_operating_information_update(**kwargs):

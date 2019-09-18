@@ -1,3 +1,4 @@
+import ast
 import hashlib
 import time
 
@@ -144,12 +145,30 @@ class CampServer:
         }
 
         try:
+            old_info = Connect.DataBaseControl.get_user_information_by_username(update_info["username"])
             need_update_info = {}
+
             for x in update_info.keys():
                 if x in ["token", "timestamp", "request_id"]:
                     continue
                 elif x == "pwd":
-                    need_update_info[x] = CampServer.sha256_key(update_info["username"], update_info["pwd"])
+                    new_pwd = CampServer.sha256_key(update_info["username"], update_info["pwd"])
+                    if new_pwd == old_info["pwd"]:
+                        continue
+                    else:
+                        need_update_info[x] = new_pwd
+                elif x == "extra_payload":
+                    new_data = CampServer.payload_update(old_info["extra_payload"], update_info["extra_payload"])
+                    if new_data is not None:
+                        need_update_info["extra_payload"] = new_data
+                    else:
+                        continue
+                elif x == "user_payload":
+                    new_data = CampServer.payload_update(old_info["user_payload"], update_info["user_payload"])
+                    if new_data is not None:
+                        need_update_info["user_payload"] = new_data
+                    else:
+                        continue
                 else:
                     need_update_info[x] = update_info[x]
 
@@ -230,6 +249,30 @@ class CampServer:
         return __new_hash
 
     @staticmethod
+    def payload_update(old_payload, new_payload):
+        new_date_flag = False
+        if old_payload is not None and new_payload is not None:
+            old_payload = ast.literal_eval(old_payload)
+            new_payload = ast.literal_eval(new_payload)
+            for x in new_payload.keys():
+                if x in old_payload.keys():
+                    if new_payload[x] == old_payload[x]:
+                        continue
+                    else:
+                        new_date_flag = True
+                        old_payload[x] = new_payload[x]
+                else:
+                    new_date_flag = True
+                    old_payload[x] = new_payload[x]
+        else:
+            return new_payload
+
+        if new_date_flag:
+            return str(old_payload)
+        else:
+            return None
+
+    @staticmethod
     def time_now_str():
         return time.time()
 
@@ -239,4 +282,6 @@ class CampServer:
 
 
 if __name__ == "__main__":
-    print(CampServer.time_now_str())
+    a = "{'gender': 'male', 'age': 28, 'name': 'john'}"
+    b = ast.literal_eval(a)
+    print(b)

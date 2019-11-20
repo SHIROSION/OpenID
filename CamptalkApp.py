@@ -10,7 +10,7 @@ from common.Riko import Riko
 """
 @module  : CamptalkApp.py
 @author  : Rinne
-@contact : yejunbin123@qq.com
+@contact : minami.rinne.me@gmail.com
 @time    : 2019/08/03
 """
 

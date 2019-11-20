@@ -8,7 +8,7 @@ from common import Connect
 """
 @module  : server.py
 @author  : Rinne
-@contact : yejunbin123@qq.com
+@contact : minami.rinne.me@gmail.com
 @time    : 2019/08/04
 """
 
@@ -271,6 +271,14 @@ class CampServer:
             return str(old_payload)
         else:
             return None
+
+    @staticmethod
+    def verification_code():
+        pass
+
+    @staticmethod
+    def use_verification_code():
+        pass
 
     @staticmethod
     def time_now_str():

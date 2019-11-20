@@ -369,6 +369,4 @@ class CampServer:
 
 
 if __name__ == "__main__":
-    a = "{'gender': 'male', 'age': 28, 'name': 'john'}"
-    b = ast.literal_eval(a)
-    print(b)
+    pass

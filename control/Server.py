@@ -1,9 +1,5 @@
-import ast
-import hashlib
-import time
-
-from datetime import datetime
-from common import Connect
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
 
 """
 @module  : server.py
@@ -11,6 +7,15 @@ from common import Connect
 @contact : minami.rinne.me@gmail.com
 @time    : 2019/08/04
 """
+
+import ast
+import hashlib
+import random
+import time
+
+from datetime import datetime
+from common.Connect import DataBaseControl
+from control.OpenIDRaiseCode import OpenIDRaiseCode
 
 
 class CampServer:
@@ -32,13 +37,13 @@ class CampServer:
             get_info = None
 
             if "email" in login_info:
-                get_info = Connect.DataBaseControl.get_user_information_by_email(login_info["email"])
+                get_info = DataBaseControl.get_user_information_by_email(login_info["email"])
 
             elif "username" in login_info:
-                get_info = Connect.DataBaseControl.get_user_information_by_username(login_info["username"])
+                get_info = DataBaseControl.get_user_information_by_username(login_info["username"])
 
             elif "phone" in login_info:
-                get_info = Connect.DataBaseControl.get_user_information_by_phone(login_info["phone"])
+                get_info = DataBaseControl.get_user_information_by_phone(login_info["phone"])
 
             if get_info is not None and get_info["state"] == 0:
 
@@ -55,15 +60,17 @@ class CampServer:
                     "user_ip": login_info["user_ip"],
                     "remote_ip": login_info["remote_ip"]
                 }
+
                 if "token" in login_info:
                     login_success_info["token"] = login_info["token"]
+
                 if "clientId" in login_info:
                     login_success_info["clientId"] = login_info["clientId"]
 
                 if CampServer.sha256_key(login_info["username"], login_info["pwd"]) == get_info["pwd"]:
                     login_success_info["login_success"] = 0
 
-                    Connect.DataBaseControl.login_operating_information_update(**login_success_info)
+                    DataBaseControl.login_operating_information_update(**login_success_info)
 
                     del get_info["pwd"]
                     login_return_info["data"] = get_info
@@ -74,7 +81,7 @@ class CampServer:
                     login_return_info["code"] = 200
                     login_return_info["sub_code"] = 1
 
-                    Connect.DataBaseControl.login_operating_information_update(**login_success_info)
+                    DataBaseControl.login_operating_information_update(**login_success_info)
 
                     return login_return_info
             else:
@@ -98,6 +105,7 @@ class CampServer:
             "code": 200,
             "sub_code": 0
         }
+
         try:
             info = {
                 "username": sign_in_info["username"],
@@ -109,9 +117,11 @@ class CampServer:
             }
 
             check_account = False
+
             if "email" in sign_in_info:
                 info["email"] = sign_in_info["email"]
                 check_account = True
+
             if check_account is False:
                 raise Exception('lack email')
 
@@ -119,21 +129,23 @@ class CampServer:
                 info["phone"] = sign_in_info["phone"]
 
             try:
-                Connect.DataBaseControl.sign_in_information(**info)
+                DataBaseControl.sign_in_information(**info)
                 login_return_info["code"] = 200
                 login_return_info["sub_code"] = 0
                 return login_return_info
+
             except Exception as ex:
                 print(ex)
                 login_return_info["code"] = 200
                 login_return_info["sub_code"] = 1
                 return login_return_info
+
         except Exception as ex:
             print(ex)
             login_return_info["code"] = 500
             login_return_info["sub_code"] = -1
             return login_return_info
-        
+
     @staticmethod
     def update_control(update_info):
 
@@ -145,7 +157,7 @@ class CampServer:
         }
 
         try:
-            old_info = Connect.DataBaseControl.get_user_information_by_username(update_info["username"])
+            old_info = DataBaseControl.get_user_information_by_username(update_info["username"])
             need_update_info = {}
 
             for x in update_info.keys():
@@ -172,7 +184,7 @@ class CampServer:
                 else:
                     need_update_info[x] = update_info[x]
 
-            Connect.DataBaseControl.update_information_by_username(update_info["username"], need_update_info)
+            DataBaseControl.update_information_by_username(update_info["username"], need_update_info)
             update_return_info["code"] = 200
             update_return_info["sub_code"] = 0
             return update_return_info
@@ -196,17 +208,17 @@ class CampServer:
 
         try:
             if "usernames" in list_info:
-                user_list_return_info["data"] = Connect.DataBaseControl.get_user_many(
+                user_list_return_info["data"] = DataBaseControl.get_user_many(
                     u_key='username',
                     user_list=list_info["usernames"]
-                    )
+                )
             elif "emails" in list_info:
-                user_list_return_info["data"] = Connect.DataBaseControl.get_user_many(
+                user_list_return_info["data"] = DataBaseControl.get_user_many(
                     u_key='email',
                     user_list=list_info["emails"]
                 )
             elif "phones" in list_info:
-                user_list_return_info["data"] = Connect.DataBaseControl.get_user_many(
+                user_list_return_info["data"] = DataBaseControl.get_user_many(
                     u_key='phone',
                     user_list=list_info["phones"]
                 )
@@ -231,7 +243,7 @@ class CampServer:
         }
 
         try:
-            Connect.DataBaseControl.delete_information(delete_info["username"])
+            DataBaseControl.delete_information(delete_info["username"])
             delete_return_info["code"] = 200
             delete_return_info["sub_code"] = 0
             return delete_return_info
@@ -273,12 +285,79 @@ class CampServer:
             return None
 
     @staticmethod
-    def verification_code():
+    def generate_verification_code_control(user_info):
+        raise_code = 0
+        generate_verification_code_info = {
+            "timestamp": CampServer.time_now_str(),
+            "request_id": user_info["request_id"],
+            "code": 200,
+            "sub_code": 0
+        }
+
+        try:
+            # new sign in
+            if user_info["type"] == 0:
+                get_info = DataBaseControl.check_username_and_email(user_info)
+
+                if get_info is None:
+                    pass
+
+                else:
+                    if len(get_info) > 1:
+                        raise_code = OpenIDRaiseCode.not_existed
+                        raise Exception
+
+                    elif len(get_info) == 1:
+                        if get_info[0]["username"] == user_info["username"]:
+                            raise_code = OpenIDRaiseCode.user_has_existed
+                            raise Exception
+
+                        elif get_info[0]["email"] == user_info["email"]:
+                            raise_code = OpenIDRaiseCode.has_existed
+                            raise Exception
+
+            # forget password
+            else:
+                if user_info["username"] or user_info["email"] is None:
+                    raise_code = OpenIDRaiseCode.lack_param
+                    raise Exception
+
+                get_info = DataBaseControl.check_username_and_email(user_info["username"])
+
+                if len(get_info) > 1:
+                    raise_code = OpenIDRaiseCode.not_existed
+                    raise Exception
+                elif len(get_info) == 1:
+                    if get_info[0]["username"] == user_info["username"]:
+                        if get_info[0]["email"] == user_info["email"]:
+                            pass
+                        else:
+                            raise_code = OpenIDRaiseCode.has_existed
+                            raise Exception
+                    else:
+                        raise_code = OpenIDRaiseCode.user_has_existed
+                        raise Exception
+
+        except Exception as ex:
+            print(ex)
+            generate_verification_code_info["code"] = 500
+            generate_verification_code_info["sub_code"] = raise_code
+            return generate_verification_code_info
+
+    @staticmethod
+    def consume_verification_code_control():
         pass
 
     @staticmethod
-    def use_verification_code():
-        pass
+    def verification_code(info_dict):
+        code = random.randint(100000, 999999)
+        check_info = DataBaseControl.get_verification_code(info_dict["email"])
+        if check_info is not None:
+            if len(check_info) == 1:
+                pass
+
+            elif len(check_info) > 1:
+                pass
 
     @staticmethod
     def time_now_str():

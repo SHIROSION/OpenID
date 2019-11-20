@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
 import pymysql
 from common.Riko import Riko, DictModel, ObjectModel, INSERT
 
@@ -19,6 +21,11 @@ class login_information(DictModel):
     pk = ["id"]
     fields = ["uid", "username", "phone", "email", "login_success", "token", "request_id", "appid", "clientId",
               "timestamp", "login_channel", "user_ip", "remote_ip", "extra_payload", "user_payload"]
+
+
+class verification_code(DictModel):
+    pk = ["id"]
+    fields = ["username", "email", "code", "timestamp"]
 
 
 class DataBaseControl:
@@ -72,5 +79,24 @@ class DataBaseControl:
         new_info.update()
 
     @staticmethod
+    def check_username_and_email(info_dict):
+        get_info = user_information.select() \
+            .where_raw("username = %(input_username)s OR email = %(input_email)s") \
+            .get({"input_username": info_dict["username"], "input_email": info_dict["email"]})
+        return get_info
+
+    @staticmethod
     def delete_information(info_dict):
         user_information.update_query().set(state=-1).where_in("username", info_dict).go()
+
+    @staticmethod
+    def get_verification_code(email):
+        return user_information.get_one(email=email)
+
+    @staticmethod
+    def insert_verification_code(**kwargs):
+        verification_code.new(**kwargs).insert()
+
+    @staticmethod
+    def delete_verification_code():
+        pass

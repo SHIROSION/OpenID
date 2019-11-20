@@ -1,3 +1,13 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
+"""
+@module  : CamptalkApp.py
+@author  : Rinne
+@contact : minami.rinne.me@gmail.com
+@time    : 2019/08/03
+"""
+
 import logging
 from datetime import datetime
 
@@ -6,13 +16,6 @@ import pymysql
 from flask import Flask, request, json
 from control.Server import CampServer
 from common.Riko import Riko
-
-"""
-@module  : CamptalkApp.py
-@author  : Rinne
-@contact : minami.rinne.me@gmail.com
-@time    : 2019/08/03
-"""
 
 app = Flask(__name__)
 
@@ -57,6 +60,18 @@ def get_user_list():
 def delete_user():
     if request.method == "DELETE":
         return json.jsonify(CampServer.delete_user_control(request.json))
+
+
+@app.route("/api/generateCode", methods=["POST"])
+def generate_verification_code():
+    if request.method == "POST":
+        return json.jsonify(CampServer.generate_verification_code_control(request.json))
+
+
+@app.route("/api/consumeCode", methods=["POST"])
+def consume_verification_code():
+    if request.method == "POST":
+        return json.jsonify(CampServer.consume_verification_code_control(request.json))
 
 
 if __name__ == "__main__":

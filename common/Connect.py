@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-import pymysql
-from common.Riko import Riko, DictModel, ObjectModel, INSERT
 
 """
 @module  : Connect.py
@@ -9,7 +7,11 @@ from common.Riko import Riko, DictModel, ObjectModel, INSERT
 @contact : minami.rinne.me@gmail.com
 @time    : 2019/08/03
 """
+import json
+import logging
 
+import pymysql
+from common.Riko import Riko, DictModel, ObjectModel, INSERT
 
 class user_information(DictModel):
     pk = ["uid"]
@@ -24,7 +26,7 @@ class login_information(DictModel):
 
 
 class verification_code(DictModel):
-    pk = ["id"]
+    pk = ["index"]
     fields = ["username", "email", "code", "timestamp"]
 
 
@@ -79,24 +81,45 @@ class DataBaseControl:
         new_info.update()
 
     @staticmethod
-    def check_username_and_email(info_dict):
+    def check_username_and_email(username, email):
         get_info = user_information.select() \
             .where_raw("username = %(input_username)s OR email = %(input_email)s") \
-            .get({"input_username": info_dict["username"], "input_email": info_dict["email"]})
+            .get({"input_username": username, "input_email": email})
         return get_info
 
     @staticmethod
-    def delete_information(info_dict):
-        user_information.update_query().set(state=-1).where_in("username", info_dict).go()
+    def delete_information(username):
+        user_information.update_query().set(state=-1).where_in("username", username).go()
 
     @staticmethod
     def get_verification_code(email):
-        return user_information.get_one(email=email)
+        get_info = verification_code.get_many(email=email)
+        return get_info
 
     @staticmethod
     def insert_verification_code(**kwargs):
         verification_code.new(**kwargs).insert()
 
     @staticmethod
-    def delete_verification_code():
-        pass
+    def delete_expired_verification_code(now_times):
+        verification_code.delete_query() \
+            .where_raw("%(current_ts)s - timestamp > 120") \
+            .go({'current_ts': now_times})
+
+
+# if __name__ == "__main__":
+#     with open("camptalk_db.json", "r") as file:
+#         config = json.loads(file.read())
+#     config["cursorclass"] = pymysql.cursors.DictCursor
+#     Riko.db_config = config
+#     log = logging.getLogger(__name__)
+#     formatter = logging.Formatter(
+#         '%(asctime)s %(name)s %(filename)s file line:%(lineno)d %(levelname)s: %(message)s')
+#     logging.basicConfig(filename='example.log',
+#                         level=logging.DEBUG,
+#                         format='%(asctime)s %(name)s %(filename)s line:%(lineno)d %(levelname)s: %(message)s')
+#     console_handler = logging.StreamHandler()
+#     console_handler.setLevel(logging.DEBUG)
+#     console_handler.setFormatter(formatter)
+#     log.addHandler(console_handler)
+

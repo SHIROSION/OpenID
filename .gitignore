@@ -4,3 +4,4 @@ camptalk_db.json
 *.py[cod]
 *$py.class
 *.log
+/control/RGMailAccount.json

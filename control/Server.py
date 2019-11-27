@@ -290,12 +290,14 @@ class CampServer:
         raise_code = 0
         generate_verification_code_info = {
             "timestamp": CampServer.time_now_str(),
+            "request_id": user_info.get("request_id"),
             "code": 200,
             "sub_code": 0
         }
         try:
             username = user_info.get("username", "")
             email = user_info.get("email", "")
+            request_id = user_info.get("request_id")
             info_type = user_info.get("type")
 
             if len(username) < 4 or len(email) < 4:
@@ -303,9 +305,9 @@ class CampServer:
                 raise Exception
 
             if info_type == 0:
-                return CampServer.new_sign_in__verification_code(username, email)
+                return CampServer.new_sign_in__verification_code(username, email, request_id)
             elif info_type == 1:
-                return CampServer.forgot_password_verification_code(username, email)
+                return CampServer.forgot_password_verification_code(username, email, request_id)
 
         except Exception as ex:
             print(ex)
@@ -316,10 +318,11 @@ class CampServer:
             return generate_verification_code_info
 
     @staticmethod
-    def new_sign_in__verification_code(username, email):
+    def new_sign_in__verification_code(username, email, request_id):
         raise_code = 0
         generate_verification_code_info = {
             "timestamp": CampServer.time_now_str(),
+            "request_id": request_id,
             "code": 200,
             "sub_code": 0
         }
@@ -356,10 +359,11 @@ class CampServer:
             return generate_verification_code_info
 
     @staticmethod
-    def forgot_password_verification_code(username, email):
+    def forgot_password_verification_code(username, email, request_id):
         raise_code = 0
         generate_verification_code_info = {
             "timestamp": CampServer.time_now_str(),
+            "request_id": request_id,
             "code": 200,
             "sub_code": 0
         }
@@ -376,11 +380,20 @@ class CampServer:
                 info_email = get_info[0].get("email", "")
 
                 if info_username == username and info_email == email:
-                    pass
-                elif info_email != email:
-                    pass
-                elif info_username != username:
-                    pass
+                    code = CampServer.verification_code(info_username, info_email)
+                    if code is not None:
+                        EmailServer().new_password_mail(email, code)
+                        return generate_verification_code_info
+                    else:
+                        raise_code = OpenIDRaiseCode.frequent
+                        raise Exception
+                elif info_email != email or info_username != username:
+                    raise_code = OpenIDRaiseCode.has_existed
+                    raise Exception
+
+            elif len(get_info) < 1:
+                raise_code = OpenIDRaiseCode.not_existed
+                raise Exception
 
         except Exception as ex:
             print(ex)
@@ -396,13 +409,14 @@ class CampServer:
 
     @staticmethod
     def is_frequently(email):
+        time_out = 120
         now_time = CampServer.time_now_str()
         all_verification_code = DataBaseControl.get_verification_code(email)
         if len(all_verification_code) < 1:
             return False
         else:
             for x in all_verification_code:
-                if (now_time - x["timestamp"]) < 120:
+                if (now_time - x["timestamp"]) < time_out:
                     return True
                 else:
                     continue

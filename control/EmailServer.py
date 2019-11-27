@@ -9,7 +9,10 @@
 """
 import json
 import smtplib
+import time
 from email.mime.text import MIMEText
+
+from control.OpenIDRaiseCode import OpenIDRaiseCode
 
 
 class EmailServer:
@@ -27,8 +30,12 @@ class EmailServer:
     def bind_user_mail(self, user_info):
         pass
 
-    def new_password_mail(self, user_info):
-        pass
+    def new_password_mail(self, user_email, code):
+        self.__send_email(
+            self.__config.get("newPasswordVerifyCodeMailFormat").format(code),
+            user_email,
+            self.__config.get("newPasswordUserMailTitle")
+        )
 
     def __send_email(self, text, receiver, title):
         __user = self.__config.get("user")
@@ -41,6 +48,6 @@ class EmailServer:
         message["To"] = receiver
         message["Subject"] = title
 
-        send_email_server = smtplib.SMTP_SSL(__mail_host, __main_port)
+        send_email_server = smtplib.SMTP_SSL(__mail_host, __main_port, timeout=30)
         send_email_server.login(__user, __pwd)
         send_email_server.sendmail(__user, receiver, message.as_string())

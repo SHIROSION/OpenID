@@ -13,6 +13,7 @@ import logging
 import pymysql
 from common.Riko import Riko, DictModel, ObjectModel, INSERT
 
+
 class user_information(DictModel):
     pk = ["uid"]
     fields = ["phone", "email", "username", "pwd", "appid", "clientId", "timestamp", "login_channel", "extra_payload",
@@ -27,7 +28,7 @@ class login_information(DictModel):
 
 class verification_code(DictModel):
     pk = ["index"]
-    fields = ["username", "email", "code", "timestamp"]
+    fields = ["username", "email", "code", "timestamp", "type"]
 
 
 class DataBaseControl:
@@ -106,6 +107,14 @@ class DataBaseControl:
             .where_raw("%(current_ts)s - timestamp > 120") \
             .go({'current_ts': now_times})
 
+    @staticmethod
+    def get_new_one_verification_code(email):
+        return verification_code.select() \
+            .where(email=email) \
+            .order_by("timestamp DESC") \
+            .limit(1) \
+            .only()
+
 
 # if __name__ == "__main__":
 #     with open("camptalk_db.json", "r") as file:
@@ -122,4 +131,5 @@ class DataBaseControl:
 #     console_handler.setLevel(logging.DEBUG)
 #     console_handler.setFormatter(formatter)
 #     log.addHandler(console_handler)
+#     print(DataBaseControl.get_new_one_verification_code("yejunbin123@qq.com"))
 

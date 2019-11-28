@@ -290,24 +290,29 @@ class CampServer:
         raise_code = 0
         generate_verification_code_info = {
             "timestamp": CampServer.time_now_str(),
-            "request_id": user_info.get("request_id"),
+            "request_id": "",
             "code": 200,
             "sub_code": 0
         }
         try:
             username = user_info.get("username", "")
             email = user_info.get("email", "")
-            request_id = user_info.get("request_id")
-            info_type = user_info.get("type")
+            request_id = user_info.get("request_id", "")
+            info_type = user_info.get("type", "")
+
+            generate_verification_code_info["request_id"] = request_id
 
             if len(username) < 4 or len(email) < 4:
                 raise_code = OpenIDRaiseCode.lack_param
                 raise Exception
 
             if info_type == 0:
-                return CampServer.new_sign_in__verification_code(username, email, request_id)
+                return CampServer.new_sign_in_verification_code(username, email, request_id, info_type)
             elif info_type == 1:
-                return CampServer.forgot_password_verification_code(username, email, request_id)
+                return CampServer.forgot_password_verification_code(username, email, request_id, info_type)
+            else:
+                raise_code = OpenIDRaiseCode.lack_param
+                raise Exception
 
         except Exception as ex:
             print(ex)
@@ -318,7 +323,7 @@ class CampServer:
             return generate_verification_code_info
 
     @staticmethod
-    def new_sign_in__verification_code(username, email, request_id):
+    def new_sign_in_verification_code(username, email, request_id, info_type):
         raise_code = 0
         generate_verification_code_info = {
             "timestamp": CampServer.time_now_str(),
@@ -330,7 +335,7 @@ class CampServer:
         try:
             get_info = DataBaseControl.check_username_and_email(username, email)
             if len(get_info) < 1:
-                code = CampServer.verification_code(username, email)
+                code = CampServer.verification_code(username, email, info_type)
                 if code is not None:
                     EmailServer().new_user_mail(email, code)
                     return generate_verification_code_info
@@ -359,7 +364,7 @@ class CampServer:
             return generate_verification_code_info
 
     @staticmethod
-    def forgot_password_verification_code(username, email, request_id):
+    def forgot_password_verification_code(username, email, request_id, info_type):
         raise_code = 0
         generate_verification_code_info = {
             "timestamp": CampServer.time_now_str(),
@@ -380,7 +385,7 @@ class CampServer:
                 info_email = get_info[0].get("email", "")
 
                 if info_username == username and info_email == email:
-                    code = CampServer.verification_code(info_username, info_email)
+                    code = CampServer.verification_code(info_username, info_email, info_type)
                     if code is not None:
                         EmailServer().new_password_mail(email, code)
                         return generate_verification_code_info
@@ -404,8 +409,67 @@ class CampServer:
             return generate_verification_code_info
 
     @staticmethod
-    def consume_verification_code_control():
-        pass
+    def consume_verification_code_control(info):
+        raise_code = 0
+
+        generate_verification_code_info = {
+            "timestamp": CampServer.time_now_str(),
+            "request_id": "",
+            "code": 200,
+            "sub_code": 0
+        }
+
+        try:
+            username = info.get("username", "")
+            email = info.get("email", "")
+            request_id = info.get("request_id", "")
+            info_type = info.get("type", "")
+            code = info.get("code", "")
+            generate_verification_code_info["request_id"] = request_id
+
+            database_verification_code = DataBaseControl.get_new_one_verification_code(email)
+
+            if len(username) < 4 or len(email) < 4:
+                raise_code = OpenIDRaiseCode.lack_param
+                raise Exception
+            elif len(database_verification_code) == 0:
+                raise_code = OpenIDRaiseCode.not_existed
+                raise Exception
+
+            database_code = database_verification_code["code"]
+            database_timestamp = database_verification_code["timestamp"]
+            database_username = database_verification_code["username"]
+            database_type = database_verification_code["type"]
+
+            if database_code == code \
+                    and CampServer.is_600s(database_timestamp) is True \
+                    and database_username == username \
+                    and info_type == database_type:
+                return generate_verification_code_info
+
+            elif database_code != code:
+                raise_code = OpenIDRaiseCode.auth_fail
+                raise Exception
+            elif CampServer.is_600s(database_timestamp) is False:
+                raise_code = OpenIDRaiseCode.timeout
+                raise Exception
+            elif database_username != username:
+                raise_code = OpenIDRaiseCode.not_existed
+                raise Exception
+            elif database_type != info_type:
+                raise_code = OpenIDRaiseCode.auth_fail
+                raise Exception
+            else:
+                raise_code = OpenIDRaiseCode.database_error
+                raise Exception
+
+        except Exception as ex:
+            print(ex)
+            if raise_code == 0:
+                raise_code = OpenIDRaiseCode.lack_param
+            generate_verification_code_info["code"] = 500
+            generate_verification_code_info["sub_code"] = raise_code
+            return generate_verification_code_info
 
     @staticmethod
     def is_frequently(email):
@@ -423,7 +487,7 @@ class CampServer:
             return False
 
     @staticmethod
-    def verification_code(username, email):
+    def verification_code(username, email, info_type):
 
         if CampServer.is_frequently(email) is False:
             code = random.randint(100000, 999999)
@@ -431,7 +495,8 @@ class CampServer:
                 "username": username,
                 "email": email,
                 "code": code,
-                "timestamp": CampServer.time_now_str()
+                "timestamp": CampServer.time_now_str(),
+                "type": info_type
             }
             DataBaseControl.insert_verification_code(**info_dict)
             return code
@@ -454,11 +519,14 @@ class CampServer:
     def time_now_format(date, date_format):
         return datetime.strptime(date, date_format)
 
-    # @staticmethod
-    # def time_calculation(times):
-    #     code_time = CampServer.time_now_format(times, "%Y-%m-%d %H:%M:%S")
-    #     now_time = CampServer.time_now()
-    #     return int((now_time - code_time).seconds)
+    @staticmethod
+    def is_600s(times):
+        time_out = 120
+        now_time = CampServer.time_now_str()
+        if (now_time - times) <= time_out:
+            return True
+        else:
+            return False
 
 
 if __name__ == "__main__":

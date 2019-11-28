@@ -9,10 +9,7 @@
 """
 import json
 import smtplib
-import time
 from email.mime.text import MIMEText
-
-from control.OpenIDRaiseCode import OpenIDRaiseCode
 
 
 class EmailServer:

@@ -5,3 +5,12 @@ camptalk_db.json
 *$py.class
 *.log
 /control/RGMailAccount.json
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
